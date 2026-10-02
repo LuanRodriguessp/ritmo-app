@@ -116,6 +116,7 @@ function freshState() {
     activeDays: Object.fromEntries(weekDays.map(({ id }) => [id, weekdayIds.includes(id)])),
     logs: {},
     completed: {},
+    completedDates: [],
   };
 }
 
@@ -131,6 +132,8 @@ let state = loadState();
 let toastTimer;
 let installPrompt;
 let editingWeek = false;
+const currentDate = new Date();
+let calendarMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
 
 function loadState() {
   try {
@@ -186,11 +189,15 @@ function loadState() {
       const completion = value === true ? localDateKey() : value;
       if (typeof completion === "string") completed[dayId] = completion;
     }
+    const completedDates = [...new Set([
+      ...(Array.isArray(saved.completedDates) ? saved.completedDates : []),
+      ...Object.values(completed),
+    ].filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)))];
 
     const selectedDay = weekDays.some((day) => day.id === saved.selectedDay)
       ? saved.selectedDay
       : legacySessionDays[saved.selected] || "mon";
-    return { ...base, ...saved, planVersion: programVersion, selectedDay, sessions: base.sessions, activeDays: base.activeDays, logs, completed };
+    return { ...base, ...saved, planVersion: programVersion, selectedDay, sessions: base.sessions, activeDays: base.activeDays, logs, completed, completedDates };
   } catch {
     return freshState();
   }
@@ -229,6 +236,14 @@ function isSessionDone(sessionId) {
   if (!completedAt) return false;
   const completedDate = new Date(`${completedAt}T12:00:00`);
   return !Number.isNaN(completedDate.getTime()) && weekKey(completedDate) === weekKey(new Date());
+}
+
+function clearSessionCompletion(sessionId) {
+  const completedAt = state.completed[sessionId];
+  delete state.completed[sessionId];
+  if (completedAt && !Object.values(state.completed).includes(completedAt)) {
+    state.completedDates = state.completedDates.filter((date) => date !== completedAt);
+  }
 }
 
 function getExerciseLog(sessionId, exerciseId, setIndex) {
@@ -281,7 +296,7 @@ function renderDayTabs() {
   tabs.innerHTML = weekDays.map((day) => {
     const active = state.activeDays[day.id];
     const selected = state.selectedDay === day.id;
-    const status = active ? "Treino" : "Descanso";
+    const status = active ? "Treino" : "Livre";
     const label = editingWeek
       ? `${active ? "Remover treino de" : "Adicionar treino em"} ${day.name}`
       : `${day.name}: ${status.toLowerCase()}`;
@@ -341,7 +356,41 @@ function renderWeekProgress() {
       : done
         ? `${activeDays.length - done} ${activeDays.length - done === 1 ? "treino restante" : "treinos restantes"} nesta semana.`
         : "Cada sessão conta. A próxima começa quando você quiser.";
+  renderCompletionCalendar();
 }
+
+function renderCompletionCalendar() {
+  const year = calendarMonth.getFullYear();
+  const month = calendarMonth.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startDate = new Date(year, month, 1 - firstDay.getDay());
+  const currentDate = new Date();
+  const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  document.querySelector("#calendar-month").textContent = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(calendarMonth);
+  document.querySelector('[data-calendar-shift="1"]').disabled = calendarMonth >= currentMonth;
+  document.querySelector("#completion-calendar").innerHTML = Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + index);
+    const dateKey = localDateKey(date);
+    const completed = state.completedDates.includes(dateKey);
+    const classes = ["calendar-day"];
+    if (date.getMonth() !== month) classes.push("outside-month");
+    if (dateKey === localDateKey()) classes.push("is-today");
+    if (completed) classes.push("is-complete");
+    const label = new Intl.DateTimeFormat("pt-BR", { dateStyle: "full" }).format(date);
+    return `<span class="${classes.join(" ")}" role="gridcell" aria-label="${label}${completed ? ", treino concluído" : ""}"><span>${date.getDate()}</span>${completed ? '<span class="calendar-check" aria-hidden="true">✓</span>' : ""}</span>`;
+  }).join("");
+}
+
+document.querySelector(".calendar-nav").addEventListener("click", (event) => {
+  const shift = Number(event.target.closest("[data-calendar-shift]")?.dataset.calendarShift);
+  if (!shift) return;
+  const nextMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + shift, 1);
+  const currentDate = new Date();
+  const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  if (nextMonth > currentMonth) return;
+  calendarMonth = nextMonth;
+  renderCompletionCalendar();
+});
 
 function showToast(message) {
   const toast = document.querySelector("#toast");
@@ -406,7 +455,7 @@ document.querySelector("#exercise-list").addEventListener("change", (event) => {
   const key = `${input.dataset.session}:${input.dataset.exercise}:${input.dataset.index}`;
   state.logs[key] ||= { checked: false, weight: "", reps: "" };
   state.logs[key].checked = input.checked;
-  if (!input.checked) delete state.completed[input.dataset.session];
+  if (!input.checked) clearSessionCompletion(input.dataset.session);
   saveState();
   render();
 });
@@ -435,7 +484,7 @@ document.querySelector("#exercise-list").addEventListener("click", (event) => {
     const exercise = state.sessions[state.selectedDay].exercises.find((item) => item.id === addSetButton.dataset.addSet);
     if (exercise.sets >= 8) return showToast("Este exercício já atingiu o limite de 8 séries.");
     exercise.sets += 1;
-    delete state.completed[state.selectedDay];
+    clearSessionCompletion(state.selectedDay);
     saveState();
     render();
     return;
@@ -446,7 +495,7 @@ document.querySelector("#exercise-list").addEventListener("click", (event) => {
     if (!exercise) return;
     state.sessions[state.selectedDay].exercises = state.sessions[state.selectedDay].exercises.filter((item) => item.id !== exercise.id);
     Object.keys(state.logs).filter((key) => key.startsWith(`${state.selectedDay}:${exercise.id}:`)).forEach((key) => delete state.logs[key]);
-    delete state.completed[state.selectedDay];
+    clearSessionCompletion(state.selectedDay);
     saveState();
     render();
     showToast(`${exercise.name} removido da sessão.`);
@@ -454,7 +503,9 @@ document.querySelector("#exercise-list").addEventListener("click", (event) => {
 });
 
 document.querySelector("#finish-button").addEventListener("click", () => {
-  state.completed[state.selectedDay] = localDateKey();
+  const completedAt = localDateKey();
+  state.completed[state.selectedDay] = completedAt;
+  if (!state.completedDates.includes(completedAt)) state.completedDates.push(completedAt);
   saveState();
   render();
   showToast("Treino concluído e salvo neste aparelho.");
@@ -463,7 +514,7 @@ document.querySelector("#finish-button").addEventListener("click", () => {
 document.querySelector("#clear-session-button").addEventListener("click", () => {
   const dayId = state.selectedDay;
   Object.keys(state.logs).filter((key) => key.startsWith(`${dayId}:`)).forEach((key) => delete state.logs[key]);
-  delete state.completed[dayId];
+  clearSessionCompletion(dayId);
   saveState();
   render();
   showToast(`Registros de ${weekDays.find((day) => day.id === dayId).name} limpos.`);
@@ -481,7 +532,7 @@ document.querySelector("#exercise-form").addEventListener("submit", (event) => {
   if (!name) return;
   const id = `custom-${crypto.randomUUID()}`;
   state.sessions[state.selectedDay].exercises.push({ id, name, muscle: String(form.get("muscle")), sets: Number(form.get("sets")), reps: String(form.get("reps")).trim(), rest: "90 s", image: "", query: `${name} execução exercício` });
-  delete state.completed[state.selectedDay];
+  clearSessionCompletion(state.selectedDay);
   saveState();
   event.currentTarget.reset();
   document.querySelector("#exercise-sets").value = "3";
