@@ -103,14 +103,14 @@ h1 { margin: 0; color: #292d49; font: 600 32px/1.08 var(--font-display); }
 .exercise-list { display: grid; gap: 9px; }
 .exercise-card { display: grid; grid-template-columns: minmax(92px, 118px) minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid #e5e5ef; border-radius: 6px; background: #fff; transition: border-color 160ms ease, background 160ms ease; animation: reveal 360ms ease both; }
 .exercise-card.is-complete { border-color: #d6d2f0; background: #fbfaff; }
-.exercise-photo { position: relative; min-height: 100%; overflow: hidden; background: linear-gradient(135deg, #e1e1fb, #a9b2df); }
-.exercise-photo img { position: absolute; width: 100%; height: 100%; inset: 0; object-fit: cover; transition: transform 300ms ease; }
-.exercise-card:hover .exercise-photo img { transform: scale(1.045); }
-.exercise-photo::after { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 52%, rgb(25 31 79 / 36%)); content: ""; pointer-events: none; }
+.exercise-media { align-self: start; width: 100%; min-width: 0; }
+.exercise-photo { position: relative; width: 100%; aspect-ratio: 3 / 2; min-height: 0; overflow: hidden; background: #e9eaf0; }
+.exercise-photo img { position: absolute; width: 100%; height: 100%; inset: 0; object-fit: contain; }
 .exercise-photo.image-fallback { display: grid; place-items: center; color: #fff; background: linear-gradient(145deg, #7567bd, #26357a); }
-.photo-index { position: absolute; z-index: 1; bottom: 8px; left: 10px; color: #fff; font: 600 9px var(--font-display); }
-.image-toggle { position: absolute; z-index: 2; right: 6px; bottom: 6px; display: flex; min-height: 23px; align-items: center; gap: 3px; padding: 0 6px; border: 1px solid rgb(255 255 255 / 55%); border-radius: 3px; color: #fff; background: rgb(38 53 122 / 82%); font-size: 7px; font-weight: 700; cursor: pointer; }
-.image-toggle:hover { background: #6453ba; }
+.exercise-media-controls { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding-top: 4px; }
+.photo-index { color: #77798d; font: 600 9px var(--font-display); }
+.image-toggle { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 3px; padding: 0 7px; border: 1px solid #e0e1eb; border-radius: 4px; color: #575b72; background: #f5f5fa; font-size: 9px; font-weight: 700; cursor: pointer; }
+.image-toggle:hover { border-color: #cac8e4; color: #453d76; background: #efeff8; }
 .photo-placeholder { position: relative; z-index: 1; color: #e9e8ff; font-size: 7px; font-weight: 700; line-height: 1.5; text-align: center; }
 .exercise-body { min-width: 0; padding: 11px 13px 9px; }
 .exercise-topline { display: flex; min-height: 18px; align-items: start; justify-content: space-between; gap: 8px; }
@@ -301,7 +301,7 @@ h1 { margin: 0; color: #292d49; font: 600 32px/1.08 var(--font-display); }
   .session-description { max-width: 270px; font-size: 11px; }
   .completion-ring { width: 51px; height: 51px; flex-basis: 51px; font-size: 12px; }
   .exercise-list { gap: 8px; }
-  .exercise-card { grid-template-columns: 82px minmax(0, 1fr); }
+  .exercise-card { grid-template-columns: minmax(88px, 34%) minmax(0, 1fr); }
   .exercise-body { padding: 10px; }
   .muscle-tag { font-size: 9px; }
   .exercise-name { font-size: 12px; }

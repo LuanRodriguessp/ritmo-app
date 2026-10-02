@@ -277,9 +277,12 @@ function renderExercise(exercise, sessionId, index) {
     ? `<p class="exercise-alternative"><strong>Alternativa:</strong> ${escapeHtml(exercise.alternative)}</p>`
     : "";
   return `<article class="exercise-card" data-card="${escapeHtml(exercise.id)}" style="animation-delay:${Math.min(index * 35, 210)}ms">
-    <div class="exercise-photo${hasReference ? "" : " image-fallback"}">${hasReference
-      ? `<img src="${exerciseImage(escapeHtml(exercise.imageId))}" alt="${escapeHtml(exercise.name)}, posição inicial" data-image-id="${escapeHtml(exercise.imageId)}" data-frame="0" loading="lazy" /><span class="photo-index">${String(index + 1).padStart(2, "0")} · INÍCIO</span><button class="image-toggle" type="button" data-image-toggle aria-label="Ver posição final de ${escapeHtml(exercise.name)}">Ver final <span aria-hidden="true">↗</span></button>`
+    <div class="exercise-media">
+      <div class="exercise-photo${hasReference ? "" : " image-fallback"}">${hasReference
+      ? `<img src="${exerciseImage(escapeHtml(exercise.imageId))}" alt="${escapeHtml(exercise.name)}, posição inicial" data-image-id="${escapeHtml(exercise.imageId)}" data-frame="0" loading="lazy" />`
       : `<span class="photo-placeholder">FIGURA<br />NÃO CADASTRADA</span>`}</div>
+      ${hasReference ? `<div class="exercise-media-controls"><span class="photo-index">${String(index + 1).padStart(2, "0")}</span><button class="image-toggle" type="button" data-image-toggle aria-label="Ver posição final de ${escapeHtml(exercise.name)}">Ver final <span aria-hidden="true">↗</span></button></div>` : ""}
+    </div>
     <div class="exercise-body">
       <div class="exercise-topline"><span class="muscle-tag">${escapeHtml(exercise.muscle)}</span><button class="remove-exercise" type="button" data-remove="${escapeHtml(exercise.id)}" aria-label="Remover ${escapeHtml(exercise.name)}" title="Remover exercício">×</button></div>
       <div class="exercise-name-row"><h3 class="exercise-name" title="${escapeHtml(exercise.name)}">${escapeHtml(exercise.name)}</h3><span class="exercise-prescription">${sets} × ${escapeHtml(exercise.reps)}</span></div>
@@ -330,13 +333,15 @@ function render() {
     ? session.exercises.map((exercise, index) => renderExercise(exercise, dayId, index)).join("")
     : `<div class="rest-day-panel"><span class="rest-day-overline">${day.label} · RECUPERAÇÃO</span><h3>Sem treino programado.</h3><p>Este dia está livre na sua semana.</p><button class="rest-day-add" type="button" data-activate-day="${dayId}">Adicionar treino neste dia <span aria-hidden="true">+</span></button></div>`;
   list.querySelectorAll(".exercise-photo img").forEach((img) => img.addEventListener("error", () => {
-    img.parentElement.classList.add("image-fallback");
+    const photo = img.parentElement;
+    const media = photo.parentElement;
+    photo.classList.add("image-fallback");
     img.remove();
-    img.parentElement.querySelector(".image-toggle")?.remove();
+    media.querySelector(".image-toggle")?.remove();
     const placeholder = document.createElement("span");
     placeholder.className = "photo-placeholder";
     placeholder.innerHTML = "FIGURA<br />INDISPONÍVEL";
-    img.parentElement.prepend(placeholder);
+    photo.prepend(placeholder);
   }, { once: true }));
   renderDayTabs();
   renderWeekProgress();
@@ -469,7 +474,6 @@ document.querySelector("#exercise-list").addEventListener("click", (event) => {
     image.dataset.frame = nextFrame;
     image.src = exerciseImage(image.dataset.imageId, nextFrame);
     image.alt = `${card.querySelector(".exercise-name").textContent}, posição ${nextFrame === "0" ? "inicial" : "final"}`;
-    card.querySelector(".photo-index").textContent = `${card.querySelector(".photo-index").textContent.slice(0, 2)} · ${nextFrame === "0" ? "INÍCIO" : "FINAL"}`;
     imageToggle.innerHTML = nextFrame === "0" ? 'Ver final <span aria-hidden="true">↗</span>' : 'Ver início <span aria-hidden="true">↙</span>';
     imageToggle.setAttribute("aria-label", `Ver posição ${nextFrame === "0" ? "final" : "inicial"} de ${card.querySelector(".exercise-name").textContent}`);
     return;
