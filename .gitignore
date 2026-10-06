@@ -1,1 +1,4 @@
 AGENTE_ESPECIALISTA_HIPERTROFIA.md
+node_modules/
+dist/
+node_modules

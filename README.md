@@ -1,34 +1,43 @@
 # Ritmo — treino pessoal
 
-PWA em português para acompanhar um programa de musculação de segunda a sexta, registrar séries e cargas e acompanhar a conclusão dos treinos. A interface é responsiva e pode ser adicionada à tela inicial do iPhone.
+PWA em React e TypeScript para acompanhar um programa de musculação de segunda a sexta, registrar séries e cargas e acompanhar a conclusão dos treinos. A interface é responsiva e pode ser adicionada à tela inicial do iPhone.
 
 ## Recursos
 
 - Ficha de hipertrofia e redução de gordura, organizada de segunda a sexta.
-- Registro de carga, repetições e séries concluídas.
+- Registro de carga, repetições e séries concluídas, com reordenação dos exercícios por arrasto (mouse, toque ou teclado) salva por dia de treino.
 - Demonstrações ilustradas com posições inicial e final, além de links para vídeos.
 - Alternativas de exercício, edição dos dias de treino e histórico semanal.
 - Salvamento local e suporte offline após os arquivos serem carregados.
 
 ## Executar localmente
 
-Requisitos: Node.js instalado. O projeto não precisa instalar dependências.
+Requisitos: Node.js 20.19+ ou 22.12+ e npm.
 
 ```bash
+npm ci
 npm run dev
 ```
 
 Abra `http://localhost:4173`. O servidor também mostra um endereço de rede local que pode ser aberto em outro aparelho conectado ao mesmo Wi-Fi.
 
+```bash
+npm test
+npm run build
+npm run preview
+```
+
+`npm run build` executa os testes unitários e a checagem de tipos antes de gerar `dist/`; se algum deles falhar, o build para. O Vite inclui os assets locais, e o service worker gerado pelo plugin PWA mantém a interface e as imagens disponíveis offline após o primeiro carregamento. Os dados continuam na chave `ritmo-training-log-v1` do `localStorage`; a migração não apaga registros anteriores no mesmo endereço.
+
 ## Publicar no GitHub Pages
 
-O site é estático; não é necessário executar `npm run dev` no GitHub nem configurar um processo de build.
+O site é estático, mas agora precisa ser compilado antes da publicação. O workflow em `.github/workflows/deploy.yml` executa testes e build e publica `dist/`.
 
 1. Crie um repositório no GitHub. Se usar o plano gratuito, deixe-o público.
-2. Envie o conteúdo desta pasta para a raiz do repositório, incluindo `assets/`, `manifest.webmanifest`, `sw.js` e `icon.svg`.
+2. Envie o projeto para a branch `main`, incluindo `assets/`, `package-lock.json` e `.github/workflows/deploy.yml`.
 3. No repositório, acesse **Settings → Pages**.
-4. Em **Build and deployment**, escolha **Deploy from a branch**, selecione `main` e a pasta `/(root)`, e salve.
-5. Aguarde a publicação e abra o endereço mostrado pelo GitHub, normalmente `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
+4. Em **Build and deployment**, escolha **GitHub Actions** como origem.
+5. Aguarde a execução do workflow e abra o endereço mostrado pelo GitHub, normalmente `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
 
 O GitHub Pages fornece HTTPS, necessário para o service worker e a instalação do PWA. Em atualizações futuras, envie as alterações para a branch publicada; o Pages fará um novo deploy.
 
