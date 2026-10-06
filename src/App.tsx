@@ -110,6 +110,7 @@ export default function App() {
   function removeExercise(exerciseId: string) {
     const exercise = session?.exercises.find((item) => item.id === exerciseId);
     if (!exercise) return;
+    if (!window.confirm(`Remover ${exercise.name} deste treino? Os registros deste exercício neste dia também serão apagados.`)) return;
     update((draft) => {
       const dayId = draft.selectedDay;
       draft.sessions[dayId]!.exercises = draft.sessions[dayId]!.exercises.filter((item) => item.id !== exerciseId);

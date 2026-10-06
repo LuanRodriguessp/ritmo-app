@@ -47,6 +47,8 @@ O GitHub Pages fornece HTTPS, necessário para o service worker e a instalação
 2. Toque em **Compartilhar** e escolha **Adicionar à Tela de Início**.
 3. Abra o Ritmo pelo ícone criado na tela inicial.
 
+Se um ícone antigo abrir **Not Found**, acesse o endereço publicado no Safari com internet para atualizar o PWA e tente o ícone novamente. Não apague o aplicativo instalado antes de preservar seu histórico: ele fica armazenado somente no aparelho e pode ser perdido na reinstalação.
+
 ## Dados e privacidade
 
 Os treinos são armazenados no `localStorage` do navegador. Não há conta, servidor ou sincronização entre dispositivos. Dados guardados em `localhost` não são compartilhados com o endereço do GitHub Pages; cada endereço e aparelho tem seu próprio armazenamento. Limpar os dados do navegador também pode apagar o histórico.

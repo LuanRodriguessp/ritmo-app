@@ -15,7 +15,6 @@ export default defineConfig({
         const output = resolve("dist");
         mkdirSync(resolve(output, "assets"), { recursive: true });
         cpSync(resolve("assets/exercises"), resolve(output, "assets/exercises"), { recursive: true });
-        cpSync(resolve("manifest.webmanifest"), resolve(output, "manifest.webmanifest"));
         cpSync(resolve("icon.svg"), resolve(output, "icon.svg"));
       },
     },
